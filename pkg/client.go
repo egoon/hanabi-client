@@ -3,10 +3,11 @@ package pkg
 import (
 	"encoding/json"
 	"fmt"
+	server "github.com/egoon/hanabi-server/pkg/model"
 	"net"
-
-	"github.com/egoon/hanabi-server/pkg/model"
 )
+
+const pingInterval = 10 //secods
 
 func NewClient(url string, playerName string) Client {
 	return &ClientImpl{
@@ -26,22 +27,22 @@ type ClientImpl struct {
 }
 
 func (c *ClientImpl) CreateGame(name string) (Game, error) {
-	return c.connectToGame(model.Action{
-		Type:         model.ActionCreate,
-		ActivePlayer: model.PlayerID(c.playerName),
-		GameID:       model.GameID(name),
+	return c.connectToGame(server.Action{
+		Type:         server.ActionCreate,
+		ActivePlayer: server.PlayerID(c.playerName),
+		GameID:       server.GameID(name),
 	})
 }
 
 func (c *ClientImpl) JoinGame(name string) (Game, error) {
-	return c.connectToGame(model.Action{
-		Type:         model.ActionCreate,
-		ActivePlayer: model.PlayerID(c.playerName),
-		GameID:       model.GameID(name),
+	return c.connectToGame(server.Action{
+		Type:         server.ActionCreate,
+		ActivePlayer: server.PlayerID(c.playerName),
+		GameID:       server.GameID(name),
 	})
 }
 
-func (c *ClientImpl) connectToGame(action model.Action) (Game, error) {
+func (c *ClientImpl) connectToGame(action server.Action) (Game, error) {
 	conn, err := net.Dial("tcp", c.url+":579")
 	if err != nil {
 		return nil, err
@@ -58,10 +59,10 @@ func (c *ClientImpl) connectToGame(action model.Action) (Game, error) {
 	}
 	var input []byte
 	conn.Read(input)
-	state := model.GameState{}
+	state := server.GameState{}
 	err = json.Unmarshal(input, &state)
 	if err != nil {
-		errMsg := model.Error{}
+		errMsg := server.Error{}
 		err = json.Unmarshal(input, errMsg)
 		if err != nil {
 			return nil, err
@@ -69,5 +70,5 @@ func (c *ClientImpl) connectToGame(action model.Action) (Game, error) {
 			return nil, fmt.Errorf(errMsg.Message)
 		}
 	}
-
+	return NewGame(conn), nil
 }
