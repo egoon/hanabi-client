@@ -78,6 +78,18 @@ func (g *GameImpl) readResponse() {
 		if err != nil {
 			log.Error("read from server failed", err)
 		}
-		//TODO: get messages from buffer to message chan
+		state := server.GameState{}
+		err = json.Unmarshal(readBuffer, state)
+		if err == nil {
+			g.messages <- model.GameMsg{State: &state}
+		} else {
+			msg := server.Error{}
+			err = json.Unmarshal(readBuffer, msg)
+			if err == nil {
+				g.messages <-  model.GameMsg{Err: &msg}
+			} else {
+				log.Error("failed to parse message from server:", readBuffer)
+			}
+		}
 	}
 }
