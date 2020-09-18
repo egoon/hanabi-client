@@ -1,7 +1,8 @@
-package model
+package pkg
 
 import (
 	"encoding/json"
+	"github.com/egoon/hanabi-client/pkg/model"
 	server "github.com/egoon/hanabi-server/pkg/model"
 	log "github.com/sirupsen/logrus"
 	"net"
@@ -11,11 +12,11 @@ import (
 const pingInterval = 10 * time.Second
 
 type Game interface {
-	GetMessages() chan GameMsg
+	GetMessages() chan model.GameMsg
 }
 
 type GameImpl struct {
-	messages chan GameMsg
+	messages chan model.GameMsg
 	actions chan server.Action
 	conn net.Conn
 	connected bool
@@ -23,7 +24,7 @@ type GameImpl struct {
 
 func NewGame(conn net.Conn) Game {
 	game := &GameImpl{
-		messages: make(chan GameMsg, 5),
+		messages: make(chan model.GameMsg, 5),
 		actions: make(chan server.Action, 5),
 		conn: conn,
 		connected: true,
@@ -34,7 +35,7 @@ func NewGame(conn net.Conn) Game {
 	return game
 }
 
-func (g *GameImpl) GetMessages() chan GameMsg {
+func (g *GameImpl) GetMessages() chan model.GameMsg {
 	return g.messages
 }
 
@@ -82,12 +83,12 @@ func (g *GameImpl) readResponse() {
 		state := server.GameState{}
 		err = json.Unmarshal(readBuffer, state)
 		if err == nil {
-			g.messages <- GameMsg{State: &state}
+			g.messages <- model.GameMsg{State: &state}
 		} else {
 			msg := server.Error{}
 			err = json.Unmarshal(readBuffer, msg)
 			if err == nil {
-				g.messages <-  GameMsg{Err: &msg}
+				g.messages <-  model.GameMsg{Err: &msg}
 			} else {
 				log.Error("failed to parse message from server:", readBuffer)
 			}
