@@ -1,4 +1,4 @@
-package pkg
+package model
 
 import (
 	"encoding/json"
@@ -6,8 +6,6 @@ import (
 	server "github.com/egoon/hanabi-server/pkg/model"
 	"net"
 )
-
-const pingInterval = 10 //secods
 
 func NewClient(url string, playerName string) Client {
 	return &ClientImpl{
