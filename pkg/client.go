@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	server "github.com/egoon/hanabi-server/pkg/model"
+	log "github.com/sirupsen/logrus"
 	"net"
 )
 
@@ -45,23 +46,30 @@ func (c *ClientImpl) connectToGame(action server.Action) (Game, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Info("Connected")
 
 	actionJson, err := json.Marshal(action)
 	if err != nil {
 		return nil, err
 	}
+	log.Info("Action: ", string(actionJson))
 	_, err = conn.Write(actionJson)
 	if err != nil {
 		conn.Close()
 		return nil, err
 	}
-	var input []byte
-	conn.Read(input)
-	state := server.GameState{}
-	err = json.Unmarshal(input, &state)
+	input := make([]byte, 1000)
+	bytesRead, err := conn.Read(input)
+	log.Info("state: ", string(input[:bytesRead]))
 	if err != nil {
+		return nil, err
+	}
+	state := server.GameState{}
+	err = json.Unmarshal(input[:bytesRead], &state)
+	if err != nil {
+		log.Debug("parsing state failed: ", err)
 		errMsg := server.Error{}
-		err = json.Unmarshal(input, errMsg)
+		err = json.Unmarshal(input[:bytesRead], &errMsg)
 		if err != nil {
 			return nil, err
 		} else {

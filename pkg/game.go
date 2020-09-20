@@ -74,23 +74,23 @@ func (g *GameImpl) send(ping []byte) {
 
 func (g *GameImpl) readResponse() {
 	defer g.conn.Close()
-	readBuffer := make([]byte, 1000, 1000)
+	readBuffer := make([]byte, 1000)
 	for g.connected {
-		_, err := g.conn.Read(readBuffer)
+		bytesRead, err := g.conn.Read(readBuffer)
 		if err != nil {
 			log.Error("read from server failed", err)
 		}
 		state := server.GameState{}
-		err = json.Unmarshal(readBuffer, state)
+		err = json.Unmarshal(readBuffer[:bytesRead], &state)
 		if err == nil {
 			g.messages <- model.GameMsg{State: &state}
 		} else {
 			msg := server.Error{}
-			err = json.Unmarshal(readBuffer, msg)
+			err = json.Unmarshal(readBuffer[:bytesRead], &msg)
 			if err == nil {
 				g.messages <-  model.GameMsg{Err: &msg}
 			} else {
-				log.Error("failed to parse message from server:", readBuffer)
+				log.Error("failed to parse message from server: ", string(readBuffer[:bytesRead]))
 			}
 		}
 	}

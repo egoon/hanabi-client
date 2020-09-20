@@ -7,12 +7,12 @@ import (
 
 func main() {
 	client := pkg.NewClient("localhost", "testPlayer")
-	game, err := client.CreateGame("testGame")
+	game, err := client.CreateGame("testGame3")
 	if err != nil {
-		log.Error("failed to create game", err)
+		log.Error("failed to create game: ", err)
 	}
 	messages := game.GetMessages()
 	msg := <- messages
-	log.Info(msg)
+	log.Info(msg.State)
 }
 
